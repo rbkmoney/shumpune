@@ -33,7 +33,6 @@
         <db.user>postgres</db.user>
         <db.password>postgres</db.password>
         <db.schema>shm</db.schema>
-        <shumpune-proto.version>1.5-9896504</shumpune-proto.version>
     </properties>
 
     <dependencies>
@@ -46,7 +45,7 @@
         <dependency>
             <groupId>com.rbkmoney</groupId>
             <artifactId>shumpune-proto</artifactId>
-            <version>${shumpune-proto.version}</version>
+            <version>1.15-4c87f03</version>
         </dependency>
         <dependency>
             <groupId>com.rbkmoney.woody</groupId>

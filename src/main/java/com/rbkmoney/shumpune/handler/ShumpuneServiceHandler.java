@@ -29,12 +29,15 @@ public class ShumpuneServiceHandler implements AccounterSrv.Iface {
     private final BalanceModelToBalanceConverter balanceModelToBalanceConverter;
     private final PostingModelToPostingBatchConverter postingModelToPostingBatchConverter;
     private final PostingPlanService postingPlanService;
+    private final AccounterSrv.Iface shumwayClient;
 
     @Override
     public Clock hold(PostingPlanChange postingPlanChange) throws TException {
         log.info("Start hold postingPlanChange: {}", postingPlanChange);
         try {
-            return postingPlanService.hold(postingPlanChange);
+            Clock hold = postingPlanService.hold(postingPlanChange);
+            shumwayClient.hold(postingPlanChange);
+            return hold;
         } catch (DaoException e) {
             log.error("Failed to hold e: ", e);
             throw new WUnavailableResultException(e);
@@ -48,7 +51,9 @@ public class ShumpuneServiceHandler implements AccounterSrv.Iface {
     public Clock commitPlan(PostingPlan postingPlan) throws TException {
         log.info("Start commitPlan postingPlan: {}", postingPlan);
         try {
-            return postingPlanService.commit(postingPlan);
+            Clock commit = postingPlanService.commit(postingPlan);
+            shumwayClient.commitPlan(postingPlan);
+            return commit;
         } catch (DaoException e) {
             log.error("Failed to commitPlan e: ", e);
             throw new WUnavailableResultException(e);
@@ -62,7 +67,9 @@ public class ShumpuneServiceHandler implements AccounterSrv.Iface {
     public Clock rollbackPlan(PostingPlan postingPlan) throws TException {
         log.info("Start rollbackPlan postingPlan: {}", postingPlan);
         try {
-            return postingPlanService.rollback(postingPlan);
+            Clock rollback = postingPlanService.rollback(postingPlan);
+            shumwayClient.rollbackPlan(postingPlan);
+            return rollback;
         } catch (DaoException e) {
             log.error("Failed to rollbackPlan e: ", e);
             throw new WUnavailableResultException(e);
@@ -130,6 +137,7 @@ public class ShumpuneServiceHandler implements AccounterSrv.Iface {
         log.info("Start createAccount prototype: {}", accountPrototype);
         try {
             Long accountId = accountDao.insert(accountPrototype);
+            shumwayClient.createAccount(accountPrototype);
             log.info("Finish createAccount accountId: {}", accountId);
             return accountId;
         } catch (DaoException e) {

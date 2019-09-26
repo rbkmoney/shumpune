@@ -160,9 +160,5 @@ public class PostingPlanServiceImpl implements PostingPlanService {
         return Clock.vector(VectorClockSerializer.serialize(clock));
     }
 
-    private boolean containsFinalOps(List<PostingModel> postingModels) {
-        return postingModels.stream()
-                .anyMatch(postingModel -> !postingModel.getOperation().equals(PostingOperation.HOLD));
-    }
 
 }

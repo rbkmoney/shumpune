@@ -33,3 +33,6 @@ spring:
   version: @project.version@
   stage: dev
 
+shumway:
+  target:
+    uri: http://localhost:8022/accounter

@@ -1,5 +1,7 @@
 package com.rbkmoney.shumpune.dao;
 
+import com.rbkmoney.damsel.shumpune.MigrationPostingPlan;
+import com.rbkmoney.damsel.shumpune.Operation;
 import com.rbkmoney.shumpune.constant.PostingLogFields;
 import com.rbkmoney.shumpune.constant.PostingOperation;
 import com.rbkmoney.shumpune.dao.mapper.PostingModelMapper;
@@ -16,10 +18,13 @@ import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.rbkmoney.shumpune.utils.DaoUtils.checkBatchUpdate;
 
 @Component
 public class PlanDaoImpl extends NamedParameterJdbcDaoSupport implements PlanDao {
@@ -161,18 +166,36 @@ public class PlanDaoImpl extends NamedParameterJdbcDaoSupport implements PlanDao
         return clock != null ? clock : 0L;
     }
 
-    private void checkBatchUpdate(int[][] updateCounts) {
-        boolean checked = false;
-        for (int[] updateCount : updateCounts) {
-            for (int i : updateCount) {
-                checked = true;
-                if (i != 1) {
-                    throw new DaoException("Posting log creation returned unexpected update count: " + i);
-                }
-            }
-        }
-        if (!checked) {
-            throw new DaoException("Posting log creation returned unexpected update count [0]");
+    public void batchPlanInsert(List<MigrationPostingPlan> list) {
+        List<PostingModel> postingModels = list.stream().map(this::convertMigrationPostingPlan).collect(Collectors.toList());
+
+        this.insertPostings(postingModels);
+    }
+
+    private PostingModel convertMigrationPostingPlan(MigrationPostingPlan migrationPostingPlan) {
+        return new PostingModel(
+                migrationPostingPlan.getPlanId(),
+                migrationPostingPlan.getBatchId(),
+                migrationPostingPlan.getAccountFromId(),
+                migrationPostingPlan.getAccountToId(),
+                migrationPostingPlan.getAmount(),
+                migrationPostingPlan.getCurrencySymbCode(),
+                migrationPostingPlan.getDescription(),
+                Instant.parse(migrationPostingPlan.getCreationTime()),
+                this.getOperation(migrationPostingPlan.getOperation())
+        );
+    }
+
+    private PostingOperation getOperation(Operation operation) {
+        switch (operation) {
+            case HOLD:
+                return PostingOperation.HOLD;
+            case COMMIT:
+                return PostingOperation.COMMIT;
+            case ROLLBACK:
+                return PostingOperation.ROLLBACK;
+            default:
+                throw new RuntimeException();
         }
     }
 }

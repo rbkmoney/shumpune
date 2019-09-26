@@ -12,6 +12,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -75,5 +76,19 @@ public class AccountDaoImpl extends NamedParameterJdbcDaoSupport implements Acco
 
     private LocalDateTime toLocalDateTime(Instant instant) {
         return LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+    }
+
+    public void batchAccountInsert(List<Account> accounts) {
+        final String sql =
+                "INSERT INTO shm.account(id, curr_sym_code, creation_time, description) " +
+                        "VALUES (?,?,?,?) " +
+                        "ON CONFLICT ON CONSTRAINT account_pkey DO NOTHING;";
+        int[][] updateCounts = getJdbcTemplate().batchUpdate(sql, accounts, accounts.size(),
+                (ps, argument) -> {
+                    ps.setLong(1, argument.getId());
+                    ps.setString(2, argument.getCurrencySymCode());
+                    ps.setTimestamp(3, Timestamp.from(TypeUtil.stringToInstant(argument.getCreationTime())));
+                    ps.setString(4, argument.getDescription());
+                });
     }
 }
