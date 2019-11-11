@@ -6,6 +6,6 @@ public interface AccountLogDao {
 
     Long insert(BalanceModel balanceModel);
 
-    BalanceModel getLastBalanceById(Long id);
+    BalanceModel getLastBalanceById(Long id, Long clockId);
 
 }

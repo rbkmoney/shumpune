@@ -80,11 +80,11 @@ public class PostingPlanServiceImpl implements PostingPlanService {
 
         long clockValue = getClockValue(accountId, clock);
 
-        BalanceModel lastBalanceById = accountLogDao.getLastBalanceById(accountId);
+        BalanceModel lastBalanceById = accountLogDao.getLastBalanceById(accountId, clockValue);
 
         long fromClock = 0L;
         if (lastBalanceById != null) {
-            if (lastBalanceById.getClock() >= clockValue) {
+            if (lastBalanceById.getClock() == clockValue) {
                 return lastBalanceById;
             }
             fromClock = lastBalanceById.getClock();

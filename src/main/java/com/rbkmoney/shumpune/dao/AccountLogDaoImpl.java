@@ -55,12 +55,13 @@ public class AccountLogDaoImpl extends NamedParameterJdbcDaoSupport implements A
     }
 
     @Override
-    public BalanceModel getLastBalanceById(Long id) {
-        MapSqlParameterSource params = new MapSqlParameterSource("accId", id);
+    public BalanceModel getLastBalanceById(Long id, Long clockId) {
+        MapSqlParameterSource params = new MapSqlParameterSource("accId", id).addValue("clockId", clockId);
         final String sql =
                 "with max_clock_account as " +
                         "(select account_id, max(clock) maxClock" +
                         "    from shm.account_log" +
+                        "    where clock <= :clockId" +
                         "    group by account_id" +
                         "    having account_id = :accId) " +
                         "select shm.account_log.id, shm.account_log.account_id, shm.account_log.own_amount, shm.account_log.max_available_amount, " +
