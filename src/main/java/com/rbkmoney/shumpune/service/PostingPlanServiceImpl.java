@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.thrift.TException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
@@ -43,8 +44,9 @@ public class PostingPlanServiceImpl implements PostingPlanService {
     private final PostingPlanToListPostingModelListConverter postingPlanToListPostingModelListConverter;
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Clock hold(PostingPlanChange postingPlanChange) throws TException {
+
         postingBatchValidator.validate(postingPlanChange.getBatch(), postingPlanChange.getId());
 
         PostingPlanModel postingPlanModel = postingPlanToPostingPlanModelConverter.convert(postingPlanChange, PostingOperation.HOLD);
@@ -57,26 +59,25 @@ public class PostingPlanServiceImpl implements PostingPlanService {
             return Clock.vector(VectorClockSerializer.serialize(
                     planDao.selectMaxClock(postingPlanChange.getId(), postingPlanChange.getBatch().getId())));
         }
-
         long clock = planDao.insertPostings(postingPlanModel.getPostingModels());
 
         return Clock.vector(VectorClockSerializer.serialize(clock));
     }
 
     @Override
-    @Transactional
     public Clock commit(PostingPlan postingPlan) throws TException {
         return finalOperation(postingPlan, PostingOperation.COMMIT);
     }
 
     @Override
-    @Transactional
     public Clock rollback(PostingPlan postingPlan) throws TException {
         return finalOperation(postingPlan, PostingOperation.ROLLBACK);
     }
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public BalanceModel getBalanceById(Long accountId, Clock clock) throws TException {
+
         long clockValue = getClockValue(accountId, clock);
 
         BalanceModel lastBalanceById = accountLogDao.getLastBalanceById(accountId);
@@ -89,9 +90,7 @@ public class PostingPlanServiceImpl implements PostingPlanService {
             fromClock = lastBalanceById.getClock();
         }
 
-        long maxClockForAccount = initMaxClockForAccount(accountId, clock, clockValue);
-
-        BalanceModel balance = planDao.getBalance(accountId, fromClock, maxClockForAccount);
+        BalanceModel balance = planDao.getBalance(accountId, fromClock, clockValue);
         if (lastBalanceById != null) {
             balance.setOwnAmount(lastBalanceById.getOwnAmount() + balance.getOwnAmount());
             balance.setMaxAvailableAmount(lastBalanceById.getMaxAvailableAmount() + balance.getMaxAvailableAmount());
@@ -104,6 +103,7 @@ public class PostingPlanServiceImpl implements PostingPlanService {
                 accountId, idLog, balance.getOwnAmount(), balance.getMinAvailableAmount(), balance.getMaxAvailableAmount(), balance.getClock());
 
         return balance;
+
     }
 
     private long initMaxClockForAccount(Long id, Clock clock, long clockValue) {

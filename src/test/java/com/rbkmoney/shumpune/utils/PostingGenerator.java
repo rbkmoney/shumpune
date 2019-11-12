@@ -39,6 +39,33 @@ public class PostingGenerator {
     }
 
     @NotNull
+    public static PostingBatch createBatch(Long providerAcc, Long systemAcc, Long merchantAcc, Long amount) {
+        PostingBatch batch = new PostingBatch();
+        batch.setId(BATCH_ID);
+        ArrayList<Posting> postings = new ArrayList<>();
+        postings.add(new Posting()
+                .setCurrencySymCode("RUB")
+                .setAmount(amount)
+                .setFromId(providerAcc)
+                .setToId(merchantAcc)
+                .setDescription("qwe"));
+        postings.add(new Posting()
+                .setCurrencySymCode("RUB")
+                .setAmount(amount)
+                .setFromId(merchantAcc)
+                .setToId(systemAcc)
+                .setDescription("qwe"));
+        postings.add(new Posting()
+                .setCurrencySymCode("RUB")
+                .setAmount(amount)
+                .setFromId(systemAcc)
+                .setToId(providerAcc)
+                .setDescription("qwe"));
+        batch.setPostings(postings);
+        return batch;
+    }
+
+    @NotNull
     public static PostingBatch createBatch(Long firstAcc, Long secAcc, Long thirdAcc, Long fourthAcc, int multiplier) {
         PostingBatch batch = new PostingBatch();
         batch.setId(BATCH_ID);
@@ -71,11 +98,19 @@ public class PostingGenerator {
         return batch;
     }
 
-
     @NotNull
     public static PostingPlanChange createPostingPlanChange(String planId, Long providerAcc, Long systemAcc, Long merchantAcc) {
         PostingPlanChange postingPlanChange = new PostingPlanChange();
         PostingBatch batch = PostingGenerator.createBatch(providerAcc, systemAcc, merchantAcc);
+        postingPlanChange.setBatch(batch)
+                .setId(planId);
+        return postingPlanChange;
+    }
+
+    @NotNull
+    public static PostingPlanChange createPostingPlanChange(String planId, Long providerAcc, Long systemAcc, Long merchantAcc, Long amount) {
+        PostingPlanChange postingPlanChange = new PostingPlanChange();
+        PostingBatch batch = PostingGenerator.createBatch(providerAcc, systemAcc, merchantAcc, amount);
         postingPlanChange.setBatch(batch)
                 .setId(planId);
         return postingPlanChange;

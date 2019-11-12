@@ -36,7 +36,8 @@ public class ShumpuneServiceHandler implements AccounterSrv.Iface {
         try {
             return postingPlanService.hold(postingPlanChange);
         } catch (DaoException e) {
-            log.error("Failed to hold e: ", e);
+            //todo uncomment
+//            log.error("Failed to hold e: ", e);
             throw new WUnavailableResultException(e);
         } catch (Exception e) {
             log.error("Failed to hold e: ", e);
@@ -120,7 +121,7 @@ public class ShumpuneServiceHandler implements AccounterSrv.Iface {
             log.info("Finish getBalanceByID balance: {}", balance);
             return balanceModelToBalanceConverter.convert(balance);
         } catch (Exception e) {
-            log.error("Failed to getBalanceByID e: ", e);
+//            log.error("Failed to getBalanceByID e: ", e);
             throw new TException(e);
         }
     }
